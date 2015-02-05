@@ -403,6 +403,36 @@ class IssueCustomAttributeFactory(Factory):
     project = factory.SubFactory("tests.factories.ProjectFactory")
 
 
+class UserStoryCustomAttributesValuesFactory(Factory):
+    class Meta:
+        model = "custom_attributes.UserStoryCustomAttributesValues"
+        strategy = factory.CREATE_STRATEGY
+
+    values = {}
+    project = factory.SubFactory("tests.factories.ProjectFactory")
+    user_story = factory.SubFactory("tests.factories.UserStoryFactory")
+
+
+class TaskCustomAttributesValuesFactory(Factory):
+    class Meta:
+        model = "custom_attributes.TaskCustomAttributesValues"
+        strategy = factory.CREATE_STRATEGY
+
+    values = {}
+    project = factory.SubFactory("tests.factories.ProjectFactory")
+    task = factory.SubFactory("tests.factories.TaskFactory")
+
+
+class IssueCustomAttributesValuesFactory(Factory):
+    class Meta:
+        model = "custom_attributes.IssueCustomAttributesValues"
+        strategy = factory.CREATE_STRATEGY
+
+    values = {}
+    project = factory.SubFactory("tests.factories.ProjectFactory")
+    issue = factory.SubFactory("tests.factories.IssueFactory")
+
+
 # class FanFactory(Factory):
 #     project = factory.SubFactory("tests.factories.ProjectFactory")
 #     user = factory.SubFactory("tests.factories.UserFactory")

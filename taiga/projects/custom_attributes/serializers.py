@@ -14,17 +14,20 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+
+from django.apps import apps
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework.serializers import ValidationError
 
 from taiga.base.serializers import ModelSerializer
+from taiga.base.serializers import JsonField
 
 from . import models
 
 
 ######################################################
-# Base Serializer  Class
+# Custom Attribute Serializer
 #######################################################
 
 class BaseCustomAttributeSerializer(ModelSerializer):
@@ -49,10 +52,6 @@ class BaseCustomAttributeSerializer(ModelSerializer):
         return data
 
 
-######################################################
-#  Custom Field Serializers
-#######################################################
-
 class UserStoryCustomAttributeSerializer(BaseCustomAttributeSerializer):
     class Meta:
         model = models.UserStoryCustomAttribute
@@ -66,3 +65,82 @@ class TaskCustomAttributeSerializer(BaseCustomAttributeSerializer):
 class IssueCustomAttributeSerializer(BaseCustomAttributeSerializer):
     class Meta:
         model = models.IssueCustomAttribute
+
+
+######################################################
+# Custom Attribute Serializer
+#######################################################
+
+
+class BaseCustomAttributesValuesSerializer:
+    values = JsonField(source="values", label="values", required=True)
+
+    def validate_values(self, attrs, source):
+        data_values = attrs.get("values", None)
+        data_project = attrs.get("project", None)
+
+        if self.object:
+            if self.object.values:
+                data_values = (data_values or self.object.values)
+            data_project = data_project or self.object.project_id
+
+        if type(data_values) is not dict:
+            raise ValidationError(_("Invalid content. It must be {\"key\": \"value\",...}"))
+
+        values_ids = list(data_values.keys())
+        qs = self._custom_attribute_model.objects.filter(project=data_project,
+                                                         id__in=values_ids)
+        if qs.count() != len(values_ids):
+            raise ValidationError(_("It contain invalid custom fields."))
+
+        return attrs
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+
+        data_container = attrs.get(self._container_field, None)
+        data_project = attrs.get("project", None)
+
+        if data_container:
+            data_container = data_container.id
+
+        if data_project:
+            data_project = data_project.id
+
+        if self.object:
+            data_container = data_container or getattr(self.object, "{}_id".format(self._container_field))
+            data_project = data_project or self.object.project_id
+
+        model = apps.get_model(self._container_model)
+        if not model.objects.filter(project=data_project, id=data_container).exists():
+            raise ValidationError(_("Different project value between the custom field values object and "
+                                    "the container object."))
+
+        return attrs
+
+
+class UserStoryCustomAttributesValuesSerializer(BaseCustomAttributesValuesSerializer, ModelSerializer):
+    _custom_attribute_model = models.UserStoryCustomAttribute
+    _container_model = "userstories.UserStory"
+    _container_field = "user_story"
+
+    class Meta:
+        model = models.UserStoryCustomAttributesValues
+
+
+class TaskCustomAttributesValuesSerializer(BaseCustomAttributesValuesSerializer, ModelSerializer):
+    _custom_attribute_model = models.TaskCustomAttribute
+    _container_model = "tasks.Task"
+    _container_field = "task"
+
+    class Meta:
+        model = models.TaskCustomAttributesValues
+
+
+class IssueCustomAttributesValuesSerializer(BaseCustomAttributesValuesSerializer, ModelSerializer):
+    _custom_attribute_model = models.IssueCustomAttribute
+    _container_model = "issues.Issue"
+    _container_field = "issue"
+
+    class Meta:
+        model = models.IssueCustomAttributesValues
