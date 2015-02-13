@@ -967,3 +967,97 @@ def test_issue_custom_attributes_values_delete_us(client):
     assert response.status_code == 204
     assert not issue.__class__.objects.filter(id=issue.id).exists()
     assert not custom_attrs_val.__class__.objects.filter(id=custom_attrs_val.id).exists()
+
+
+#########################################################
+# Test tristres triggers :-P
+#########################################################
+
+def test_trigger_update_userstorycustomvalues_afeter_remove_userstorycustomattribute():
+    user_story = f.UserStoryFactory()
+    member = f.MembershipFactory(user=user_story.project.owner,
+                                 project=user_story.project,
+                                 is_owner=True)
+
+    custom_attr_1 = f.UserStoryCustomAttributeFactory(project=user_story.project)
+    ct1_id = "{}".format(custom_attr_1.id)
+    custom_attr_2 = f.UserStoryCustomAttributeFactory(project=user_story.project)
+    ct2_id = "{}".format(custom_attr_2.id)
+
+    custom_attrs_val = f.UserStoryCustomAttributesValuesFactory(
+        project=user_story.project,
+        user_story=user_story,
+        values= {
+            ct1_id: "test_1",
+            ct2_id: "test_2"
+        },
+    )
+
+    assert ct1_id in custom_attrs_val.values.keys()
+    assert ct2_id in custom_attrs_val.values.keys()
+
+    custom_attr_2.delete()
+    custom_attrs_val = custom_attrs_val.__class__.objects.get(id=custom_attrs_val.id)
+
+    assert ct1_id in custom_attrs_val.values.keys()
+    assert ct2_id not in custom_attrs_val.values.keys()
+
+
+def test_trigger_update_taskcustomvalues_afeter_remove_taskcustomattribute():
+    task = f.TaskFactory()
+    member = f.MembershipFactory(user=task.project.owner,
+                                 project=task.project,
+                                 is_owner=True)
+
+    custom_attr_1 = f.TaskCustomAttributeFactory(project=task.project)
+    ct1_id = "{}".format(custom_attr_1.id)
+    custom_attr_2 = f.TaskCustomAttributeFactory(project=task.project)
+    ct2_id = "{}".format(custom_attr_2.id)
+
+    custom_attrs_val = f.TaskCustomAttributesValuesFactory(
+        project=task.project,
+        task=task,
+        values= {
+            ct1_id: "test_1",
+            ct2_id: "test_2"
+        },
+    )
+
+    assert ct1_id in custom_attrs_val.values.keys()
+    assert ct2_id in custom_attrs_val.values.keys()
+
+    custom_attr_2.delete()
+    custom_attrs_val = custom_attrs_val.__class__.objects.get(id=custom_attrs_val.id)
+
+    assert ct1_id in custom_attrs_val.values.keys()
+    assert ct2_id not in custom_attrs_val.values.keys()
+
+
+def test_trigger_update_issuecustomvalues_afeter_remove_issuecustomattribute():
+    issue = f.IssueFactory()
+    member = f.MembershipFactory(user=issue.project.owner,
+                                 project=issue.project,
+                                 is_owner=True)
+
+    custom_attr_1 = f.IssueCustomAttributeFactory(project=issue.project)
+    ct1_id = "{}".format(custom_attr_1.id)
+    custom_attr_2 = f.IssueCustomAttributeFactory(project=issue.project)
+    ct2_id = "{}".format(custom_attr_2.id)
+
+    custom_attrs_val = f.IssueCustomAttributesValuesFactory(
+        project=issue.project,
+        issue=issue,
+        values= {
+            ct1_id: "test_1",
+            ct2_id: "test_2"
+        },
+    )
+
+    assert ct1_id in custom_attrs_val.values.keys()
+    assert ct2_id in custom_attrs_val.values.keys()
+
+    custom_attr_2.delete()
+    custom_attrs_val = custom_attrs_val.__class__.objects.get(id=custom_attrs_val.id)
+
+    assert ct1_id in custom_attrs_val.values.keys()
+    assert ct2_id not in custom_attrs_val.values.keys()
